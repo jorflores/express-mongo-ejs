@@ -18,7 +18,7 @@ const indexRoutes = require('./routes/routeindex');
 
 
 // settings
-app.set('port', process.env.PORT || 3000);
+app.set('port', config.app.port);
 app.set('views','views');
 app.set('view engine', 'ejs');
 
