@@ -13,9 +13,8 @@ mongoose.connect(config.db.connectionUrl,{
     .then(db => console.log('db connected'))
     .catch(err => console.log(err));
 
-// importing routes
+// importing routescls
 const indexRoutes = require('./routes/routeindex');
-
 
 // settings
 app.set('port', config.app.port);
