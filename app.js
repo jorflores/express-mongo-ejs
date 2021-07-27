@@ -2,8 +2,10 @@ const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const config = require("./config");
+var cookieParser = require("cookie-parser")
 
 const app = express();
+
 
 // connection to Mongo db
 mongoose.connect(config.db.connectionUrl,{
@@ -24,7 +26,8 @@ app.set('view engine', 'ejs');
 // middlewares
 app.use(morgan('dev'));
 app.use(express.urlencoded({extended:false}));
-
+app.use(express.static('public'));
+app.use(cookieParser());
 
 // routes
 app.use('/', indexRoutes);
