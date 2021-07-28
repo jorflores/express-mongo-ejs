@@ -7,6 +7,7 @@ const verify = require("../middleware/verifyAccess");
 var multer = require('multer');
 var fs = require('fs');
 var path = require('path');
+var jwt = require("jsonwebtoken");
 
 
 var storage = multer.diskStorage({
@@ -59,38 +60,72 @@ app.post('/image-upload', upload.single('image'), (req, res, next) => {
 app.get('/login', function(req,res){
 
   res.render('login')
-  });
+});
 
-  app.get('/register', function(req,res){
-
-    res.render('register')
-    });
-
-    app.post('/addUser', async function(req,res){
-
-     var user = new User(req.body);
-    user.password = user.encryptPassword(user.password);
-
-     await user.save()
-
+app.post('/login', async function(req,res){
+  var email = req.body.email;
+  var password = req.body.password;
+  /*
+    var {email,password} = req.body
+  */
+  var user = await User.findOne({email: email});
+  //Si el usuario no existe
+  if(!user){
+    return res.status(404).send("El usuario no existe");
+  }
+  //Si existe, validad la constraseña
+  else{
+    var valid = await user.validatePassword(password);
+    // si la contraseña es valida, crear un token
+    if(valid)
+    {
+      var token = jwt.sign({id:user.email,permission:true},"abc1234",{expiresIn: "1h"});
+      console.log(token);
+      res.cookie("token",token,{httpOnly: true})
+      res.redirect("/")
+    }
+    else{
+      console.log("Password is not valid")
       res.redirect("/login")
+    }
+  }
+  console.log(user)
+});
 
-      });    
+app.get('/register', function(req,res){
+
+  res.render('register')
+});
+
+app.post('/addUser', async function(req,res){
+
+  var user = new User(req.body);
+  user.password = user.encryptPassword(user.password);
+
+  await user.save()
+
+  res.redirect("/login")
+
+});    
 
 
 // Nos regresaria las tareas guardadas en la BD con el método find(). Una vez obtenidas las tareas las regresamos a la pagina principal.
 app.get('/',verify, async function(req,res){
+  console.log("El ususario es: "+ req.userId);
+  console.log("Permissos? : "+ req.permission)
 
-var tasks = await Task.find();
-console.log(tasks)
-res.render('index',{tasks})
+  var tasks = await Task.find({user_id: req.userId});
+  console.log(tasks)
+  res.render('index',{tasks})
 });
 
 // Ruta que nos permita agregar nuevas tareas que vienen desde un metodo post. Una vez enviada la tarea podemos redireccionar a la pagina principal con res.redirect('/')
-app.post('/add', async  (req,res) => {
-var task = new Task(req.body);
-await task.save();
-res.redirect('/')
+app.post('/add',verify, async  (req,res) => {
+  var task = new Task(req.body);
+  task.user_id = req.userId;
+
+  await task.save();
+  res.redirect('/')
 });
 
 // Ruta para editar los datos. Primero necesitamos buscarlos en base a un id que ya me llega desde la ruta. Metodo de busqueda findById(). 
@@ -131,4 +166,9 @@ app.get('/delete/:id',  async (req,res) =>{
   res.redirect('/')
 })
 
+app.get('/logoff',  async (req,res) =>{
+
+  res.clearCookie("token");
+  res.redirect("/");
+})
 module.exports = app;
