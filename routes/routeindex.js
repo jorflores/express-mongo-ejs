@@ -2,7 +2,58 @@ const express = require('express');
 const app = express();
 const Task = require('../model/task');
 const User = require('../model/user');
+const Image = require('../model/image');
 const verify = require("../middleware/verifyAccess");
+var multer = require('multer');
+var fs = require('fs');
+var path = require('path');
+
+
+var storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, 'uploads')
+  },
+  filename: (req, file, cb) => {
+      cb(null, file.fieldname + '-' + Date.now())
+  }
+});
+
+var upload = multer({ storage: storage });
+
+
+app.get('/image-upload', (req, res) => {
+  Image.find({}, (err, items) => {
+      if (err) {
+          console.log(err);
+          res.status(500).send('An error occurred', err);
+      }
+      else {
+          res.render('images', { items: items });
+      }
+  });
+});
+
+app.post('/image-upload', upload.single('image'), (req, res, next) => {
+ 
+  //console.log(req)
+  var obj = {
+      name: req.body.name,
+      desc: req.body.desc,
+      img: {
+          data: fs.readFileSync(path.join('./uploads/' + req.file.filename)),
+          contentType: 'image/png'
+      }
+  }
+  Image.create(obj, (err, item) => {
+      if (err) {
+          console.log(err);
+      }
+      else {
+          // item.save();
+          res.redirect('/image-upload');
+      }
+  });
+});
 
 
 app.get('/login', function(req,res){
