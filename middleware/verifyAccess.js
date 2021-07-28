@@ -1,4 +1,4 @@
-
+var jwt = require("jsonwebtoken");
 
 function verifyToken(req,res,next) {
 
@@ -10,7 +10,23 @@ if (!token) {
 }
 else {
 
-    next();
+    jwt.verify(token,"abcd1234", function(err,datos){
+
+        if (err){
+            console.log(err);
+            return res.redirec("/login")
+        }
+        else {
+
+            req.userId = datos.id;
+            req.permission = datos.permission;
+
+            next();
+        }
+
+    })
+
+    
 }
 
 }
