@@ -8,6 +8,7 @@ var multer = require('multer');
 var fs = require('fs');
 var path = require('path');
 var jwt = require("jsonwebtoken");
+var flash = require("connect-flash");
 
 
 var storage = multer.diskStorage({
@@ -58,8 +59,8 @@ app.post('/image-upload', upload.single('image'), (req, res, next) => {
 
 
 app.get('/login', function(req,res){
-
-  res.render('login')
+var message = req.flash('message')
+  res.render('login',{message})
 });
 
 
@@ -76,7 +77,10 @@ app.post('/login', async function(req,res){
 
   //si no existe
   if(!user) {
-    return res.status(404).send("El usuario no existe");
+   
+  req.flash('message','El usuario no existe')
+  res.redirect('/login');
+    //  return res.status(404).send("El usuario no existe");
   }
   // si existe, validar la contraseña
   else {
@@ -93,8 +97,9 @@ app.post('/login', async function(req,res){
     }
     // si no es valida
     else {
-      console.log("Password is not valid")
-      res.redirect("/login")
+
+      req.flash('message','La contraseña es incorrecta')
+      res.redirect('/login');
     }
 
   }
