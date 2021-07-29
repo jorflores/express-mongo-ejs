@@ -14,7 +14,7 @@ else {
 
         if (err){
             console.log(err);
-            return res.redirec("/login")
+            return res.redirect("/login")
         }
         else {
 
